@@ -76,7 +76,7 @@ jobs:
         run: |
           echo "Using target: $DBT_TARGET"
           cat > profiles.yml <<EOF
-          analytics_dbt_project:
+          dbt_analytics:
             target: $DBT_TARGET
             outputs:
               dev:
@@ -159,7 +159,7 @@ jobs:
           SNOWFLAKE_SCHEMA: dbt_models
         run: |
           cat > profiles.yml <<EOF
-          analytics_dbt_project:
+          dbt_analytics:
             target: dev
             outputs:
               dev:
@@ -242,7 +242,7 @@ jobs:
           SNOWFLAKE_SCHEMA: dbt_models
         run: |
           cat > profiles.yml <<EOF
-          analytics_dbt_project:
+          dbt_analytics:
             target: prod
             outputs:
               prod:
