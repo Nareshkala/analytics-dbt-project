@@ -6,9 +6,9 @@ dbt_analytics:
       type: snowflake
       account: ""
       user: ""
-      role: "{{ env_var('DBT_CURRENT_ROLE') }}"              # Resolved from env.yml
+      role: "{{ env_var('DBT_DEV_ROLE') }}"              # Resolved from env.yml
       database: "{{ env_var('DBT_DEV_DATABASE') }}"
-      warehouse: "{{ env_var('DBT_CURRENT_WH') }}"
+      warehouse: "{{ env_var('DBT_DEV_WH') }}"
       schema: "{{ env_var('DBT_DEV_SCHEMA') }}"
       threads: 8
       client_session_keep_alive: False
