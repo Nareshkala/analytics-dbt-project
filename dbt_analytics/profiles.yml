@@ -6,11 +6,12 @@ dbt_analytics:
       type: snowflake
       account: ""
       user: ""
+   
       role: "{{ env_var('DBT_DEV_ROLE') }}"              # Resolved from env.yml
       database: "{{ env_var('DBT_DEV_DATABASE') }}"
       warehouse: "{{ env_var('DBT_DEV_WH') }}"
       schema: "{{ env_var('DBT_DEV_SCHEMA') }}"
-      threads: 8
+      threads: 4
       client_session_keep_alive: False
       query_tag: "dbt_dev"
 
@@ -18,11 +19,12 @@ dbt_analytics:
       type: snowflake
       account: ""
       user: ""
+     
       role: "{{ env_var('DBT_PROD_ROLE') }}"
       database: "{{ env_var('DBT_PROD_DATABASE') }}"
       warehouse: "{{ env_var('DBT_PROD_WH') }}"
       schema: "{{ env_var('DBT_PROD_SCHEMA') }}"
-      threads: 8
+      threads: 4
       client_session_keep_alive: False
       query_tag: "dbt_prod"
 

@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  # =====================================================
+  # BRONZE LAYER
+  # =====================================================
+  - name: bronze_airport_locations
+    description: "Bronze layer: Raw airport location data ingested from S3"
+    columns:
+      - name: _bronze_row_id
+        description: "Unique identifier for bronze record"
+        tests:
+          - not_null
+
+  - name: bronze_flight_delays
+    description: "Bronze layer: Raw flight delay and cancellation data"
+    columns:
+      - name: _bronze_row_id
+        description: "Unique identifier for bronze record"
+        tests:
+          - not_null
+
+  - name: bronze_flight_weather
+    description: "Bronze layer: Raw hourly weather observations"
+    columns:
+      - name: _bronze_row_id
+        description: "Unique identifier for bronze record"
+        tests:
+          - not_null

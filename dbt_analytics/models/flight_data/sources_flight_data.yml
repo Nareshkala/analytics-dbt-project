@@ -1,0 +1,232 @@
+# Source definitions for flight data from S3
+# Co-authored with CoCo
+
+version: 2
+
+sources:
+  - name: raw_flight_data
+    description: "Raw flight, weather, and airport data loaded from S3 CSV files"
+    schema: RAW_DATA
+
+    tables:
+      # =====================================================
+      # FLIGHT_DELAYS SOURCE
+      # =====================================================
+      - name: flight_delays
+        description: "Flight delay and cancellation data with origin and destination details"
+        identifier: FLIGHT_DELAYS
+
+        columns:
+          - name: year
+            description: "Flight year"
+            tests:
+              - not_null
+
+          - name: month
+            description: "Flight month (1-12)"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [1,2,3,4,5,6,7,8,9,10,11,12]
+
+          - name: day_of_month
+            description: "Day of month (1-31)"
+            tests:
+              - not_null
+
+          - name: day_of_week
+            description: "Flight day of week"
+            tests:
+              - not_null
+
+          - name: carrier
+            description: "Airline carrier code"
+            tests:
+              - not_null
+
+          - name: crs_dep_time
+            description: "Scheduled departure time"
+
+          - name: dep_delay
+            description: "Departure delay in minutes (negative = early)"
+
+          - name: dep_del15
+            description: "Departure delay >= 15 minutes indicator (0 or 1)"
+
+          - name: crs_arr_time
+            description: "Scheduled arrival time"
+
+          - name: arr_delay
+            description: "Arrival delay in minutes (negative = early)"
+
+          - name: arr_del15
+            description: "Arrival delay >= 15 minutes indicator (0 or 1)"
+
+          - name: cancelled
+            description: "Flight cancelled indicator (0 or 1)"
+
+          - name: origin_airport_code
+            description: "Origin airport code"
+            tests:
+              - not_null
+
+          - name: origin_airport_name
+            description: "Origin airport name"
+
+          - name: origin_latitude
+            description: "Origin airport latitude"
+
+          - name: origin_longitude
+            description: "Origin airport longitude"
+
+          - name: dest_airport_code
+            description: "Destination airport code"
+            tests:
+              - not_null
+
+          - name: dest_airport_name
+            description: "Destination airport name"
+
+          - name: dest_latitude
+            description: "Destination airport latitude"
+
+          - name: dest_longitude
+            description: "Destination airport longitude"
+
+      # =====================================================
+      # FLIGHT_WEATHER SOURCE
+      # =====================================================
+      - name: flight_weather
+        description: "Hourly weather observations at airports"
+        identifier: FLIGHT_WEATHER
+
+        columns:
+          - name: year
+            description: "Observation year"
+            tests:
+              - not_null
+
+          - name: month
+            description: "Observation month (1-12)"
+            tests:
+              - not_null
+
+          - name: day
+            description: "Observation day (1-31)"
+            tests:
+              - not_null
+
+          - name: time
+            description: "Observation time in HHMM format"
+
+          - name: time_zone
+            description: "Time zone of the observation"
+
+          - name: sky_condition
+            description: "Sky condition description"
+
+          - name: visibility
+            description: "Visibility in miles"
+
+          - name: weather_type
+            description: "Weather type (e.g., RA for rain)"
+
+          - name: dry_bulb_farenheit
+            description: "Temperature in Fahrenheit"
+
+          - name: dry_bulb_celsius
+            description: "Temperature in Celsius"
+
+          - name: wet_bulb_farenheit
+            description: "Wet bulb temperature in Fahrenheit"
+
+          - name: wet_bulb_celsius
+            description: "Wet bulb temperature in Celsius"
+
+          - name: dew_point_farenheit
+            description: "Dew point in Fahrenheit"
+
+          - name: dew_point_celsius
+            description: "Dew point in Celsius"
+
+          - name: relative_humidity
+            description: "Relative humidity percentage"
+
+          - name: wind_speed
+            description: "Wind speed in MPH"
+
+          - name: wind_direction
+            description: "Wind direction in degrees"
+
+          - name: value_for_wind_character
+            description: "Wind character code"
+
+          - name: station_pressure
+            description: "Station pressure"
+
+          - name: pressure_tendency
+            description: "Pressure tendency code"
+
+          - name: pressure_change
+            description: "Pressure change"
+
+          - name: sea_level_pressure
+            description: "Sea level pressure"
+
+          - name: record_type
+            description: "Observation record type"
+
+          - name: hourly_precip
+            description: "Hourly precipitation"
+
+          - name: altimeter
+            description: "Altimeter setting"
+
+          - name: airport_code
+            description: "Airport code where weather was observed"
+            tests:
+              - not_null
+
+          - name: display_airport_name
+            description: "Airport display name"
+
+          - name: latitude
+            description: "Airport latitude"
+
+          - name: longitude
+            description: "Airport longitude"
+
+      # =====================================================
+      # AIRPORT_LOCATIONS SOURCE
+      # =====================================================
+      - name: airport_locations
+        description: "Airport reference data with codes and geographic coordinates"
+        identifier: AIRPORT_LOCATIONS
+
+        columns:
+          - name: airport_id
+            description: "Unique airport identifier"
+            tests:
+              - unique
+              - not_null
+
+          - name: airport_code
+            description: "Airport code (IATA/FAA)"
+            tests:
+              - unique
+              - not_null
+
+          - name: display_airport_name
+            description: "Airport name"
+            tests:
+              - not_null
+
+          - name: latitude
+            description: "Airport latitude"
+            tests:
+              - not_null
+
+          - name: longitude
+            description: "Airport longitude"
+            tests:
+              - not_null

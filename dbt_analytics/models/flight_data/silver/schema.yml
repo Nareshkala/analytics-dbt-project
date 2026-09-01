@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: silver_airports
+    description: "Silver layer: Cleaned airport reference data"
+    meta:
+      layer: "silver"
+      grain: "One row per airport"
+    columns:
+      - name: airport_key
+        description: "Surrogate key for airport"
+        tests:
+          - unique
+          - not_null
+      - name: airport_code
+        description: "Airport code (natural key)"
+        tests:
+          - unique
+          - not_null
+
+  - name: silver_flights
+    description: "Silver layer: Cleaned flight data with calculated fields"
+    meta:
+      layer: "silver"
+      grain: "One row per flight"
+    columns:
+      - name: flight_key
+        description: "Surrogate key for flight"
+        tests:
+          - unique
+          - not_null
+      - name: flight_date
+        description: "Date of flight"
+        tests:
+          - not_null
+      - name: origin_airport_code
+        description: "Origin airport code"
+        tests:
+          - not_null
+      - name: dest_airport_code
+        description: "Destination airport code"
+        tests:
+          - not_null
+      - name: arr_delay_minutes
+        description: "Arrival delay in minutes"
+      - name: dep_delay_minutes
+        description: "Departure delay in minutes"
+
+  - name: silver_weather
+    description: "Silver layer: Cleaned weather data with derived categories"
+    meta:
+      layer: "silver"
+      grain: "One row per airport per hour"
+    columns:
+      - name: weather_key
+        description: "Surrogate key for weather observation"
+        tests:
+          - unique
+          - not_null
+      - name: observation_date
+        description: "Date of weather observation"
+        tests:
+          - not_null
+      - name: airport_code
+        description: "Airport code"
+        tests:
+          - not_null

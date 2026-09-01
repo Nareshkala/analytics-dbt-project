@@ -22,6 +22,8 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
+vars:
+  iceberg_external_volume: 'iceberg_external_volume'
 
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
@@ -34,3 +36,36 @@ models:
     # Config indicated by + and applies to all files under models/example/
     example:
       +materialized: view
+
+    flight_data:
+
+      # Bronze layer - Raw data ingestion from S3
+      bronze:
+        +materialized: incremental
+        +incremental_strategy: "append"
+        +on_schema_change: "append_new_columns"
+        +schema: bronze
+        +tags: ["bronze"]
+        +table_format: "iceberg"
+        +unique_key: "_bronze_row_id"
+        +external_volume: "{{ var('iceberg_external_volume', 'iceberg_external_volume') }}"
+
+      # Silver layer - Cleaned and transformed data
+      silver:
+        +materialized: incremental
+        +incremental_strategy: "merge"
+        +on_schema_change: "append_new_columns"
+        +schema: silver
+        +tags: ["silver"]
+        +table_format: "iceberg"
+        +external_volume: "{{ var('iceberg_external_volume', 'iceberg_external_volume') }}"
+      
+
+      # Gold layer - Analytics-ready data
+      gold:
+        +materialized: table
+        +schema: gold
+        +tags: ["gold"]
+        +table_format: "iceberg"
+        +external_volume: "{{ var('iceberg_external_volume', 'iceberg_external_volume') }}"
+  

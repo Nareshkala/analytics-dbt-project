@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: dim_airports
+    description: "Gold dimension: Airport dimension for analytics"
+    meta:
+      layer: "gold"
+      type: "dimension"
+    columns:
+      - name: airport_key
+        description: "Surrogate key"
+        tests:
+          - unique
+          - not_null
+      - name: airport_code
+        description: "Airport code"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    description: "Gold dimension: Date dimension for time-based analysis"
+    meta:
+      layer: "gold"
+      type: "dimension"
+    columns:
+      - name: date_key
+        description: "Surrogate key"
+        tests:
+          - unique
+          - not_null
+      - name: date
+        description: "Actual date"
+        tests:
+          - unique
+          - not_null
+
+  # =====================================================
+  # GOLD LAYER - FACTS
+  # =====================================================
+  - name: fct_flight_performance
+    description: "Gold fact: Flight performance with weather enrichment"
+    meta:
+      layer: "gold"
+      type: "fact"
+      grain: "One row per flight"
+    columns:
+      - name: flight_key
+        description: "Surrogate key"
+        tests:
+          - unique
+          - not_null
+      - name: date_key
+        description: "Foreign key to dim_date"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: origin_airport_key
+        description: "Foreign key to dim_airports (origin)"
+        tests:
+          - relationships:
+              to: ref('dim_airports')
+              field: airport_key
+      - name: dest_airport_key
+        description: "Foreign key to dim_airports (destination)"
+        tests:
+          - relationships:
+              to: ref('dim_airports')
+              field: airport_key
+
+  # =====================================================
+  # GOLD LAYER - METRICS
+  # =====================================================
+  - name: airport_performance_metrics
+    description: "Gold metrics: Airport-level performance aggregations"
+    meta:
+      layer: "gold"
+      type: "metric"
+      grain: "One row per airport"
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "total_operations >= 0"
+
+  - name: weather_impact_analysis
+    description: "Gold metrics: Weather impact on flight delays"
+    meta:
+      layer: "gold"
+      type: "metric"
+      grain: "One row per weather category/range"
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "total_flights >= 0"
