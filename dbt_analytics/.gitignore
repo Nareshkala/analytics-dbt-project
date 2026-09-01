@@ -3,3 +3,6 @@ target/
 dbt_packages/
 logs/
 .env
+package-lock.yml
+packages.yml
+.user.yml
