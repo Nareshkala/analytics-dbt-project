@@ -10,7 +10,7 @@ with source as (
 
 ),
 
-renamed as (
+base as (
 
     select
         {{ dbt_utils.generate_surrogate_key([
@@ -46,7 +46,7 @@ renamed as (
 
 )
 
-select * from renamed
+select * from base
 
 {% if is_incremental() %}
 where _loaded_at > (select coalesce(max(_loaded_at), '1900-01-01') from {{ this }})
