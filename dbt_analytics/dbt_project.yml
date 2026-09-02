@@ -49,9 +49,6 @@ vars:
 # =====================================================
 models:
   dbt_analytics:
-    # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
 
     flight_data:
 
