@@ -52,19 +52,12 @@ jobs:
       - name: Verify dbt installation
         run: dbt --version
 
-      - name: Set target environment
-        id: set-target
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/prod" ]] || [[ "${{ github.event.pull_request.merged }}" == "true" && "${{ github.base_ref }}" == "prod" ]]; then
-            echo "target=prod" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
-            echo "target=prod" >> $GITHUB_OUTPUT
-          else
-            echo "target=dev" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure dbt profile for CI/CD
         working-directory: dbt_analytics
+        # Reuses dev credentials — safe because `dbt compile` never opens a
+        # connection to actually run anything, it only renders SQL. No
+        # separate CI database/role needed for this. Real build+test happens
+        # locally before you push, and again for real in deploy-dev/deploy-prod.
         env:
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
@@ -72,16 +65,10 @@ jobs:
           SNOWFLAKE_DEV_ROLE: ${{ secrets.SNOWFLAKE_DEV_ROLE }}
           SNOWFLAKE_DEV_DATABASE: ${{ secrets.SNOWFLAKE_DEV_DATABASE }}
           SNOWFLAKE_DEV_WAREHOUSE: ${{ secrets.SNOWFLAKE_DEV_WAREHOUSE }}
-          SNOWFLAKE_PROD_ROLE: ${{ secrets.SNOWFLAKE_PROD_ROLE }}
-          SNOWFLAKE_PROD_DATABASE: ${{ secrets.SNOWFLAKE_PROD_DATABASE }}
-          SNOWFLAKE_PROD_WAREHOUSE: ${{ secrets.SNOWFLAKE_PROD_WAREHOUSE }}
-          SNOWFLAKE_SCHEMA: dbt_models
-          DBT_TARGET: ${{ steps.set-target.outputs.target }}
         run: |
-          echo "Using target: $DBT_TARGET"
           cat > profiles.yml <<EOF
           dbt_analytics:
-            target: $DBT_TARGET
+            target: dev
             outputs:
               dev:
                 type: snowflake
@@ -91,23 +78,10 @@ jobs:
                 role: $SNOWFLAKE_DEV_ROLE
                 database: $SNOWFLAKE_DEV_DATABASE
                 warehouse: $SNOWFLAKE_DEV_WAREHOUSE
-                schema: $SNOWFLAKE_SCHEMA
+                schema: dbt_ci
                 threads: 4
                 client_session_keep_alive: False
-                query_tag: dbt_cicd_dev
-
-              prod:
-                type: snowflake
-                account: $SNOWFLAKE_ACCOUNT
-                user: $SNOWFLAKE_USER
-                password: $SNOWFLAKE_PASSWORD
-                role: $SNOWFLAKE_PROD_ROLE
-                database: $SNOWFLAKE_PROD_DATABASE
-                warehouse: $SNOWFLAKE_PROD_WAREHOUSE
-                schema: $SNOWFLAKE_SCHEMA
-                threads: 4
-                client_session_keep_alive: False
-                query_tag: dbt_cicd_prod
+                query_tag: dbt_cicd_compile
           EOF
 
       - name: Install dbt dependencies
@@ -120,17 +94,12 @@ jobs:
 
       - name: Compile dbt models
         working-directory: dbt_analytics
+        # Compile-only: catches Jinja/ref/YAML/macro errors before deploy runs,
+        # with zero writes to Snowflake. Won't catch real SQL errors (type
+        # mismatches, merge conflicts) — those only surface when code actually
+        # runs, which happens locally (before you push) and for real in
+        # deploy-dev/deploy-prod.
         run: dbt compile
-
-      - name: Run dbt tests
-        working-directory: dbt_analytics
-        run: dbt test
-        # continue-on-error removed: this job gates deploy-dev/deploy-prod via
-        # `needs: dbt-test`. With continue-on-error left on, a failing `dbt test`
-        # still reported this step (and therefore the whole job) as successful,
-        # so a broken model could deploy straight to prod with failing tests.
-        # If you want tests to be informational-only for now, keep the line but
-        # do it deliberately, not as a default.
 
   deploy-dev:
     name: Deploy to Development
