@@ -25,6 +25,10 @@ on:
 env:
   DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_analytics
   DBT_PROJECT_DIR: ${{ github.workspace }}/dbt_analytics
+  # Pin the same dbt-snowflake version everywhere in this file (and match it
+  # locally when regenerating package-lock.yml) so lock-file schema and CLI
+  # behavior stay consistent between dev machines and CI.
+  DBT_SNOWFLAKE_VERSION: '1.9.4'
 
 jobs:
   dbt-test:
@@ -43,7 +47,7 @@ jobs:
       - name: Install dbt-snowflake
         run: |
           pip install --upgrade pip
-          pip install dbt-snowflake==1.7.0
+          pip install dbt-snowflake==${{ env.DBT_SNOWFLAKE_VERSION }}
 
       - name: Verify dbt installation
         run: dbt --version
@@ -121,7 +125,12 @@ jobs:
       - name: Run dbt tests
         working-directory: dbt_analytics
         run: dbt test
-        continue-on-error: true
+        # continue-on-error removed: this job gates deploy-dev/deploy-prod via
+        # `needs: dbt-test`. With continue-on-error left on, a failing `dbt test`
+        # still reported this step (and therefore the whole job) as successful,
+        # so a broken model could deploy straight to prod with failing tests.
+        # If you want tests to be informational-only for now, keep the line but
+        # do it deliberately, not as a default.
 
   deploy-dev:
     name: Deploy to Development
@@ -145,7 +154,7 @@ jobs:
       - name: Install dbt-snowflake
         run: |
           pip install --upgrade pip
-          pip install dbt-snowflake==1.7.0
+          pip install dbt-snowflake==${{ env.DBT_SNOWFLAKE_VERSION }}
 
       - name: Configure dbt profile for Dev
         working-directory: dbt_analytics
@@ -207,8 +216,13 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: dbt-test
+    # NOTE: `on.push.branches` above only listens for `main`, so a push to
+    # `prod` can never actually trigger this workflow — that condition was
+    # dead code. Production deploys happen via a PR merged into `prod`
+    # (matches the `pull_request: types: [closed]` trigger above) or manual
+    # `workflow_dispatch`. If you also want direct pushes to `prod` to
+    # deploy, add `prod` to `on.push.branches` and restore the ref check.
     if: |
-      (github.ref == 'refs/heads/prod' && github.event_name == 'push') ||
       (github.event.pull_request.merged == true && github.base_ref == 'prod') ||
       (github.event.inputs.environment == 'prod')
 
@@ -228,7 +242,7 @@ jobs:
       - name: Install dbt-snowflake
         run: |
           pip install --upgrade pip
-          pip install dbt-snowflake==1.7.0
+          pip install dbt-snowflake==${{ env.DBT_SNOWFLAKE_VERSION }}
 
       - name: Configure dbt profile for Prod
         working-directory: dbt_analytics
@@ -286,4 +300,3 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "Actor: ${{ github.actor }}"
           echo "⚠️ Production database has been updated"
- 
